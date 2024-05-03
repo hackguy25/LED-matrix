@@ -1,0 +1,9 @@
+[package]
+name = "led-matrix-serial"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libftd2xx = { version = "0.32.2", features = ["static"] }
+time = "0.1.45"
+timer = "0.2.0"
