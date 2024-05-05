@@ -1,28 +1,39 @@
 #!/bin/sh
 
+# Compile a verilog file into a Gowin FPGA bitstream.
+
+# Fail on error.
 set -e
 
+# Extract the name of the source file.
 fname=$(echo $1 | cut -f 1 -d '.')
 shift 1
 echo "Compiling ${fname}.v..."
 
-if [ -d "${fname}_target" ]
-then
-    rm -rf "${fname}_target"
-fi
+# Fail if a file exists that has the same name as the build directory.
 if [ -f "${fname}_target" ]
 then
     >&2 echo "Target dir is a file!!"
     exit 1
 fi
-mkdir "${fname}_target"
 
+# Create or empty out the build directory.
+if [ -d "${fname}_target" ]
+then
+    rm -rf "${fname}_target/*"
+    mkdir -p "${fname}_target"
+else
+    mkdir "${fname}_target"
+fi
+
+# Compile Verilog.
 echo "Running yosys..."
 yosys \
     -p "read_verilog ${fname}.v; synth_gowin -json ${fname}_target/${fname}.json" \
     $@ \
     > "${fname}_target/yosys.log"
 
+# Place and route the design.
 echo "Running nextpnr..."
 export LD_LIBRARY_PATH=/home/apicula/.pyenv/versions/3.12.3/lib
     nextpnr-himbaechel \
@@ -32,14 +43,16 @@ export LD_LIBRARY_PATH=/home/apicula/.pyenv/versions/3.12.3/lib
     --vopt family=GW1N-9C \
     --vopt cst=tangnano9k.cst \
     2>&1 \
-    | cat > "${fname}_target/nextpnr.log"
+    | cat > "${fname}_target/nextpnr.log" # This is needed because nextpnr prints to stderr??
 
+# Fail if nextpnr failed.
 if [ ! -f "${fname}_target/pnr_${fname}.json" ]
 then
     echo "Nextpnr failed, check \"${fname}_target/nextpnr.log\" for more details."
     exit 1
 fi
 
+# Pack the bitstream.
 echo "Running gowin_pack..."
 /home/apicula/.pyenv/shims/gowin_pack \
     -d GW1N-9C \
