@@ -7,8 +7,8 @@ Like `1bpc_colors`, but drive pixels and lines independently.
 module top (
     input clk,
     input S2,
-    output reg H75_R2,
     output reg H75_R1,
+    output reg H75_R2,
     output reg H75_G1,
     output reg H75_G2,
     output reg H75_B1,
@@ -28,7 +28,7 @@ wire color_clk;
 
 // External clock is 27MHz, divide it by 27 to get a 1MHz pulse.
 prescaler #(
-    .NUM(27),
+    .NUM(2_700_000),
     .NUM_BITS(32),
 )
 color_psc (
@@ -38,11 +38,11 @@ color_psc (
 );
 
 // Only the first 3 bits are used for color, the rest are padding.
-reg [0:13] color;
+reg [0:2] color;
 
 // Pixel state.
 // Larger S => less time spent with output disabled, more time displaying color.
-localparam S = 7;
+localparam S = 4;
 reg [S-1:0] state;
 
 assign led[0] = color[0];
@@ -59,6 +59,8 @@ assign H75_G2 = color[1];
 assign H75_B1 = color[2];
 assign H75_B2 = color[2];
 
+// First try.
+/*
 always @(posedge clk) begin
     if (color_clk) begin
         case (state)
@@ -74,6 +76,86 @@ always @(posedge clk) begin
             S'd5: H75_Lat <= 1'b0;
             // Pull OE low.
             S'd6: H75_OE <= 1'b0;
+        endcase
+        state <= state + 1'b1;
+    end
+end
+*/
+
+// Clock the color while OE is low.
+/*
+always @(posedge clk) begin
+    if (color_clk) begin
+        case (state)
+            // Change color.
+            S'd0: color <= color + 1'b1;
+            // Clock the color in.
+            S'd1: H75_Clk <= 1'b1;
+            S'd2: H75_Clk <= 1'b0;
+            // Raise OE high.
+            S'd3: H75_OE <= 1'b1;
+            // Latch the line.
+            S'd4: H75_Lat <= 1'b1;
+            S'd5: H75_Lat <= 1'b0;
+            // Pull OE low.
+            S'd6: H75_OE <= 1'b0;
+        endcase
+        state <= state + 1'b1;
+    end
+end
+*/
+
+// Pull OE and latch low at the same time.
+/*
+always @(posedge clk) begin
+    if (color_clk) begin
+        case (state)
+            // Change color.
+            S'd0: color <= color + 1'b1;
+            // Clock the color in.
+            S'd1: H75_Clk <= 1'b1;
+            S'd2: H75_Clk <= 1'b0;
+            // Raise OE high.
+            S'd3: H75_OE <= 1'b1;
+            // Latch the line.
+            S'd4: H75_Lat <= 1'b1;
+            S'd5: begin
+                H75_Lat <= 1'b0;
+                H75_OE <= 1'b0;
+            end
+        endcase
+        state <= state + 1'b1;
+    end
+end
+*/
+
+// Which color is clocked in?
+always @(posedge clk) begin
+    if (color_clk) begin
+        case (state)
+            // Change color.
+            S'd0: color <= 3'b100; // red
+            // Clock the color in.
+            S'd1: begin
+                H75_Clk <= 1'b1;
+                color <= 3'b010; // green
+            end
+            // At this point either green or yellow turns up, indicating the color is clocked in
+            // on the rising edge of Clk.
+            S'd2: color <= 3'b001; // blue
+            S'd3: begin
+                H75_Clk <= 1'b0;
+                color <= 3'b111; // white
+            end
+            S'd4: color <= 3'b101; // magenta
+            // Raise OE high.
+            S'd5: H75_OE <= 1'b1;
+            // Latch the line.
+            S'd6: H75_Lat <= 1'b1;
+            S'd7: begin
+                H75_Lat <= 1'b0;
+                H75_OE <= 1'b0;
+            end
         endcase
         state <= state + 1'b1;
     end

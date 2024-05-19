@@ -103,21 +103,26 @@ always @(posedge clk) begin
                 H75_B2 <= color[2];
             end
             8'b1000_0000: begin
-                // Latch high.
-                H75_Lat <= 1'b0;
+                // Set clock to final low.
+                H75_Clk <= 1'b0;
             end
-            8'b1000_0001: begin
-                // Latch low.
-                H75_Lat <= 1'b0;
+            // -----
+            8'b1111_1100: begin
+                // Pull Output Enable high.
+                H75_OE <= 1'b1;
+            end
+            8'b1111_1101: begin
+                // Latch high.
+                H75_Lat <= 1'b1;
                 // Update line.
                 line <= line + 1'b1;
             end
-            8'b1000_0010: begin
-                // Pull Output Enable low.
-                H75_OE <= 1'b1;
+            8'b1111_1110: begin
+                // Latch low.
+                H75_Lat <= 1'b0;
             end
             8'b1111_1111: begin
-                // Pull Output Enable high.
+                // Pull Output Enable low.
                 H75_OE <= 1'b0;
             end
         endcase
