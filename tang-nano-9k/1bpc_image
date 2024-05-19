@@ -1,0 +1,101 @@
+/*
+Display a 1BPC image on an LED matrix.
+*/
+
+`include "includes/prescaler.v"
+
+module top (
+    input clk,
+    input S2,
+    output reg H75_R2,
+    output reg H75_R1,
+    output reg H75_G1,
+    output reg H75_G2,
+    output reg H75_B1,
+    output reg H75_B2,
+    output H75_A,
+    output H75_B,
+    output H75_C,
+    output H75_D,
+    output H75_E,
+    output reg H75_OE,
+    output reg H75_Clk,
+    output reg H75_Lat,
+);
+
+// An image of 3 rings.
+// Top half of the red channel.
+localparam [0:63] img_r1 [31:0] = {
+    64'h0000007ffe000000, 64'h000007ffffe00000, 64'h00001ffffff80000, 64'h00007ff81ffe0000,
+    64'h0001ff0000ff8000, 64'h0007f800001fe000, 64'h000fe0000007f000, 64'h001f80000001f800,
+}
+
+
+wire pixel_clk;
+
+// 1MHz clock is desired, so divide the 27MHz external clock by 27.
+prescaler #(
+    .NUM(27),
+    .NUM_BITS(32),
+)
+pixel_psc (
+    .clk(clk),
+    .rst(1'b0),
+    .enable(pixel_clk),
+);
+
+reg [7:0] state;
+reg [4:0] line;
+
+assign H75_A = line[0];
+assign H75_B = line[1];
+assign H75_C = line[2];
+assign H75_D = line[3];
+assign H75_E = line[4];
+
+always @(posedge clk) begin
+    if (pixel_clk) begin
+        casex (state)
+            8'b0xxx_xxx0: begin
+                // Set clock high.
+                H75_Clk <= 1'b1;
+            end
+            8'b0xxx_xxx1: begin
+                // Set clock low.
+                H75_Clk <= 1'b0;
+                H75_R1 <= color[0];
+                H75_R2 <= color[0];
+                H75_G1 <= color[1];
+                H75_G2 <= color[1];
+                H75_B1 <= color[2];
+                H75_B2 <= color[2];
+            end
+            8'b1000_0000: begin
+                // Set clock to final low.
+                H75_Clk <= 1'b0;
+            end
+            // -----
+            8'b1111_1100: begin
+                // Pull Output Enable high.
+                H75_OE <= 1'b1;
+            end
+            8'b1111_1101: begin
+                // Latch high.
+                H75_Lat <= 1'b1;
+                // Update line.
+                line <= line + 1'b1;
+            end
+            8'b1111_1110: begin
+                // Latch low.
+                H75_Lat <= 1'b0;
+            end
+            8'b1111_1111: begin
+                // Pull Output Enable low.
+                H75_OE <= 1'b0;
+            end
+        endcase
+        state <= state + 1'b1;
+    end
+end
+
+endmodule
