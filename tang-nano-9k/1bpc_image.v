@@ -118,24 +118,37 @@ assign H75_C = line[2];
 assign H75_D = line[3];
 assign H75_E = line[4];
 
+wire [4:0] next_line;
+assign next_line = line + 1;
+
+wire [4:0] column;
+assign column = state[5:1];
+
+wire [0:5] next_color;
+
+// TODO: This.
+assign next_color = case (next_line)
+    for (i = 0; i < 32; i = i + 1)
+endcase
+
 always @(posedge clk) begin
     if (pixel_clk) begin
         casex (state)
-            8'b0xxx_xxx0: begin
+            8'b00xx_xxx0: begin
+                // Set clock low.
+                H75_Clk <= 1'b0;
+                H75_R1 <= next_color[0];
+                H75_R2 <= next_color[1];
+                H75_G1 <= next_color[2];
+                H75_G2 <= next_color[3];
+                H75_B1 <= next_color[4];
+                H75_B2 <= next_color[5];
+            end
+            8'b00xx_xxx1: begin
                 // Set clock high.
                 H75_Clk <= 1'b1;
             end
-            8'b0xxx_xxx1: begin
-                // Set clock low.
-                H75_Clk <= 1'b0;
-                H75_R1 <= color[0];
-                H75_R2 <= color[0];
-                H75_G1 <= color[1];
-                H75_G2 <= color[1];
-                H75_B1 <= color[2];
-                H75_B2 <= color[2];
-            end
-            8'b1000_0000: begin
+            8'b0100_0000: begin
                 // Set clock to final low.
                 H75_Clk <= 1'b0;
             end
@@ -148,7 +161,7 @@ always @(posedge clk) begin
                 // Latch high.
                 H75_Lat <= 1'b1;
                 // Update line.
-                line <= line + 1'b1;
+                line <= next_line;
             end
             8'b1111_1110: begin
                 // Latch low.
