@@ -10,45 +10,48 @@ fname=$(echo $1 | cut -f 1 -d '.')
 shift 1
 echo "Compiling ${fname}.v..."
 
+# Create the "target" directory, if it doesn't exist yet.
+mkdir -p "target"
+
 # Fail if a file exists that has the same name as the build directory.
-if [ -f "${fname}_target" ]
+if [ -f "target/${fname}" ]
 then
     >&2 echo "Target dir is a file!!"
     exit 1
 fi
 
 # Create or empty out the build directory.
-if [ -d "${fname}_target" ]
+if [ -d "target/${fname}" ]
 then
-    rm -rf "${fname}_target/*"
-    mkdir -p "${fname}_target"
+    rm -rf "target/${fname}/*"
+    mkdir -p "target/${fname}"
 else
-    mkdir "${fname}_target"
+    mkdir "target/${fname}"
 fi
 
 # Compile Verilog.
 echo "Running yosys..."
 yosys \
-    -p "read_verilog ${fname}.v; synth_gowin -json ${fname}_target/${fname}.json" \
+    -p "read_verilog ${fname}.v; synth_gowin -json target/${fname}/yosys_${fname}.json" \
     $@ \
-    > "${fname}_target/yosys.log"
+    > "target/${fname}/yosys.log"
 
 # Place and route the design.
 echo "Running nextpnr..."
 export LD_LIBRARY_PATH=/home/apicula/.pyenv/versions/3.12.3/lib
     nextpnr-himbaechel \
-    --json "${fname}_target/${fname}.json" \
-    --write "${fname}_target/pnr_${fname}.json" \
+    --json "target/${fname}/yosys_${fname}.json" \
+    --write "target/${fname}/pnr_${fname}.json" \
     --device "GW1NR-LV9QN88PC6/I5" \
     --vopt family=GW1N-9C \
     --vopt cst=tangnano9k.cst \
     2>&1 \
-    | cat > "${fname}_target/nextpnr.log" # This is needed because nextpnr prints to stderr??
+    | cat > "target/${fname}/nextpnr.log" # This is needed because nextpnr prints to stderr??
 
 # Fail if nextpnr failed.
-if [ ! -f "${fname}_target/pnr_${fname}.json" ]
+if [ ! -f "target/${fname}/pnr_${fname}.json" ]
 then
-    echo "Nextpnr failed, check \"${fname}_target/nextpnr.log\" for more details."
+    echo "Nextpnr failed, check \"target/${fname}/nextpnr.log\" for more details."
     exit 1
 fi
 
@@ -56,7 +59,7 @@ fi
 echo "Running gowin_pack..."
 /home/apicula/.pyenv/shims/gowin_pack \
     -d GW1N-9C \
-    -o "${fname}_target/pack.fs" \
-    "${fname}_target/pnr_${fname}.json"
+    -o "target/${fname}/pack.fs" \
+    "target/${fname}/pnr_${fname}.json"
 
-echo "Done!"
+echo "Done compiling!"
