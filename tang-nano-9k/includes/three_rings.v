@@ -25,8 +25,8 @@ module three_rings (
 wire [0:63] r1_inner;
 always @* begin
     case (line)
-        5'h00: r1_inner = 64'h000007ffffe00000;
-        5'h01: r1_inner = 64'h0000007ffe000000;
+        5'h00: r1_inner = 64'h0000007ffe000000;
+        5'h01: r1_inner = 64'h000007ffffe00000;
         5'h02: r1_inner = 64'h00001ffffff80000;
         5'h03: r1_inner = 64'h00007ff81ffe0000;
         5'h04: r1_inner = 64'h0001ff0000ff8000;
@@ -153,7 +153,7 @@ always @* begin
         5'h02: b1_inner = 64'h000000001ffffe00;
         5'h03: b1_inner = 64'h000000007fc0ff80;
         5'h04: b1_inner = 64'h00000000fe001fc0;
-        5'h05: b1_inner = 64'h00000001f8000730;
+        5'h05: b1_inner = 64'h00000001f80007f0;
         5'h06: b1_inner = 64'h00000003f00003f0;
         5'h07: b1_inner = 64'h00000007c00000f8;
         5'h08: b1_inner = 64'h0000000780000078;
@@ -188,7 +188,7 @@ end
 wire [0:63] b2_inner;
 always @* begin
     casex (line)
-        5'b00000: b2_inner = 64'h00000001f8000730;
+        5'b00000: b2_inner = 64'h00000001f80007f0;
         5'b00001: b2_inner = 64'h00000000fe001fc0;
         5'b00010: b2_inner = 64'h000000007fc0ff80;
         5'b00011: b2_inner = 64'h000000001ffffe00;

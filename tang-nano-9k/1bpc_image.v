@@ -40,6 +40,8 @@ pixel_psc (
 
 reg [7:0] state;
 reg [4:0] line;
+wire [4:0] next_line;
+assign next_line = line + 1;
 
 assign H75_A = line[0];
 assign H75_B = line[1];
@@ -47,8 +49,8 @@ assign H75_C = line[2];
 assign H75_D = line[3];
 assign H75_E = line[4];
 
-wire [4:0] column;
-assign column = state[5:1];
+wire [5:0] column;
+assign column = state[6:1];
 wire next_r1;
 wire next_r2;
 wire next_g1;
@@ -57,7 +59,7 @@ wire next_b1;
 wire next_b2;
 
 three_rings tr(
-    .line(line),
+    .line(next_line),
     .column(column),
     .r1(next_r1),
     .r2(next_r2),
@@ -70,7 +72,7 @@ three_rings tr(
 always @(posedge clk) begin
     if (pixel_clk) begin
         casex (state)
-            8'b00xx_xxx0: begin
+            8'b0xxx_xxx0: begin
                 // Set clock low.
                 H75_Clk <= 1'b0;
                 H75_R1 <= next_r1;
@@ -80,11 +82,11 @@ always @(posedge clk) begin
                 H75_B1 <= next_b1;
                 H75_B2 <= next_b2;
             end
-            8'b00xx_xxx1: begin
+            8'b0xxx_xxx1: begin
                 // Set clock high.
                 H75_Clk <= 1'b1;
             end
-            8'b0100_0000: begin
+            8'b1000_0000: begin
                 // Set clock to final low.
                 H75_Clk <= 1'b0;
             end
@@ -97,7 +99,7 @@ always @(posedge clk) begin
                 // Latch high.
                 H75_Lat <= 1'b1;
                 // Update line.
-                line <= line + 1;
+                line <= next_line;
             end
             8'b1111_1110: begin
                 // Latch low.
