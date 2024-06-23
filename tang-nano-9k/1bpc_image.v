@@ -49,8 +49,8 @@ assign H75_C = line[2];
 assign H75_D = line[3];
 assign H75_E = line[4];
 
-wire [5:0] column;
-assign column = state[6:1];
+wire [5:0] next_column;
+assign next_column = state[6:1];
 wire next_r1;
 wire next_r2;
 wire next_g1;
@@ -60,7 +60,7 @@ wire next_b2;
 
 three_rings tr(
     .line(next_line),
-    .column(column),
+    .column(next_column),
     .r1(next_r1),
     .r2(next_r2),
     .g1(next_g1),

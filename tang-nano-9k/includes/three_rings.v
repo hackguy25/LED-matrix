@@ -7,12 +7,12 @@ A LUT ROM of 3 rings: red, green and blue, with their intersections adding up in
 module three_rings (
     input [4:0] line,
     input [5:0] column,
-    output r1,
-    output r2,
-    output g1,
+    output reg r1,
+    output reg r2,
+    output reg g1,
     output g2,
-    output b1,
-    output b2,
+    output reg b1,
+    output reg b2,
 );
 
 // Hex char bit order inverse ref:
@@ -22,7 +22,7 @@ module three_rings (
 // 3 c   7 e   b d   f f
 
 // R1
-wire [0:63] r1_inner;
+reg [0:63] r1_inner;
 always @* begin
     case (line)
         5'h00: r1_inner = 64'h0000007ffe000000;
@@ -62,7 +62,7 @@ always @* begin
 end
 
 // R2
-wire [0:63] r2_inner;
+reg [0:63] r2_inner;
 always @* begin
     case (line)
         5'h00: r2_inner = 64'he000000000000007;
@@ -102,7 +102,7 @@ always @* begin
 end
 
 // G1
-wire [0:63] g1_inner;
+reg [0:63] g1_inner;
 always @* begin
     case (line)
         5'h00: g1_inner = 64'h0000001ff8000000;
@@ -145,7 +145,7 @@ end
 assign g2 = 1'b0;
 
 // B1
-wire [0:63] b1_inner;
+reg [0:63] b1_inner;
 always @* begin
     case (line)
         5'h00: b1_inner = 64'h0000000001ffe000;
@@ -185,7 +185,7 @@ always @* begin
 end
 
 // B2
-wire [0:63] b2_inner;
+reg [0:63] b2_inner;
 always @* begin
     casex (line)
         5'b00000: b2_inner = 64'h00000001f80007f0;
