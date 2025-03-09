@@ -57,7 +57,7 @@ fi
 
 # Pack the bitstream.
 echo "Running gowin_pack..."
-/home/apicula/.pyenv/shims/gowin_pack \
+gowin_pack \
     -d GW1N-9C \
     -o "target/${fname}/pack.fs" \
     "target/${fname}/pnr_${fname}.json"
